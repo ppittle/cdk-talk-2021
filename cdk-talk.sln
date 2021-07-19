@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31402.337
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "Web\Web.csproj", "{B3A46086-E9BC-452A-9B60-0FF967627834}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cdk", "Cdk\Cdk.csproj", "{E0EAEF3F-B35B-4E56-BFAA-133513997858}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessingLambda", "ProcessingLambda\ProcessingLambda.csproj", "{80E92421-D337-46A4-B838-F777712EE1D4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EB382FE4-F01D-474B-8C8A-0B958C8EB930}"
+	ProjectSection(SolutionItems) = preProject
+		cdk.json = cdk.json
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IngressLambda", "IngressLambda\IngressLambda.csproj", "{CDA619D6-3CD5-46E4-9827-F7C3F2B810BE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B3A46086-E9BC-452A-9B60-0FF967627834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A46086-E9BC-452A-9B60-0FF967627834}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A46086-E9BC-452A-9B60-0FF967627834}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A46086-E9BC-452A-9B60-0FF967627834}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0EAEF3F-B35B-4E56-BFAA-133513997858}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0EAEF3F-B35B-4E56-BFAA-133513997858}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0EAEF3F-B35B-4E56-BFAA-133513997858}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0EAEF3F-B35B-4E56-BFAA-133513997858}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80E92421-D337-46A4-B838-F777712EE1D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80E92421-D337-46A4-B838-F777712EE1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80E92421-D337-46A4-B838-F777712EE1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80E92421-D337-46A4-B838-F777712EE1D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDA619D6-3CD5-46E4-9827-F7C3F2B810BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDA619D6-3CD5-46E4-9827-F7C3F2B810BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDA619D6-3CD5-46E4-9827-F7C3F2B810BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDA619D6-3CD5-46E4-9827-F7C3F2B810BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F8D722F0-00E0-449A-9652-5F55FA59D3BC}
+	EndGlobalSection
+EndGlobal
