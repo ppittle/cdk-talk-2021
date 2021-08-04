@@ -7,7 +7,7 @@ namespace Cdk
         public static void Main(string[] args)
         {
             var app = new App();
-            new AppStack(app, "AppStack");
+            new AppStack(app, "Cdk-Talk-AppStack");
             app.Synth();
         }
     }
