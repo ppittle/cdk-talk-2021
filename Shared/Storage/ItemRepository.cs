@@ -9,7 +9,7 @@ namespace Shared.Storage
     public interface IItemRepository
     {
         Task Upsert(ItemDataModel itemDataModel);
-        Task<List<ItemDataModel>> GetAll();
+        Task<List<ItemDataModel>> GetAll(int customerId);
     }
 
     internal class ItemRepository : IItemRepository
@@ -19,7 +19,7 @@ namespace Shared.Storage
             throw new NotImplementedException();
         }
 
-        public Task<List<ItemDataModel>> GetAll()
+        public Task<List<ItemDataModel>> GetAll(int customerId)
         {
             throw new NotImplementedException();
         }

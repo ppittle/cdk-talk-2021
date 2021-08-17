@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,16 +6,19 @@
     <!-- Roll forward to future major versions of the netcoreapp as needed -->
     <RollForward>Major</RollForward>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <!-- CDK Construct Library dependencies -->
     <PackageReference Include="Amazon.CDK" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.APIGateway" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.DynamoDB" Version="1.114.0" />
+    <PackageReference Include="Amazon.CDK.AWS.EC2" Version="1.114.0" />
+    <PackageReference Include="Amazon.CDK.AWS.ECS.Patterns" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.ElasticBeanstalk" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.Lambda" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.S3" Version="1.114.0" />
     <PackageReference Include="Amazon.CDK.AWS.SQS" Version="1.114.0" />
+    <PackageReference Include="Amazon.JSII.Analyzers" Version="1.32.0" />
 
     <!-- jsii Roslyn analyzers (un-comment to obtain compile-time checks for missing required props
     <PackageReference Include="Amazon.Jsii.Analyzers" Version="*" PrivateAssets="all" />
@@ -29,4 +32,9 @@
     <ProjectReference Include="..\Web\Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="settings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

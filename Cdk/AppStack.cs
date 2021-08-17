@@ -5,6 +5,10 @@ using System.Net.Mime;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.DynamoDB;
+using Amazon.CDK.AWS.EC2;
+using Amazon.CDK.AWS.ECR;
+using Amazon.CDK.AWS.ECS;
+using Amazon.CDK.AWS.ECS.Patterns;
 using Amazon.CDK.AWS.ElasticBeanstalk;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
@@ -16,21 +20,33 @@ namespace Cdk
 {
     public class AppStack : Stack
     {
-        internal AppStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
+        private const string _buildConfiguration =
+#if DEBUG
+            "Debug";
+#else
+            "Release";
+#endif
+
+        private readonly DeploymentSettings _settings;
+
+        internal AppStack(DeploymentSettings settings, Construct scope, string id, IStackProps props = null) 
+            : base(scope, id, props)
         {
-            // Step 1: Create Everything
-            var queue = CreateSQS();
+            _settings = settings;
 
-            var dynamoDb = CreateDynamoDb();
+            // Step 1: Create Queue
+            var queue = CreateQueue();
 
-            var ingestionLambda = CreateIngestionLambda(queue);
+            var dynamoDb = CreateDataStore();
 
-            var processingLambda = CreateProcessingLambda(queue, dynamoDb);
+            var ingestionLambda = CreateIngestionApiFunction(queue);
 
-            var website = CreateElasticBeanstalkWeb(ingestionLambda, dynamoDb);
+            var processingLambda = CreateProcessingFunction(queue, dynamoDb);
+
+            var website = CreateWebSite(dynamoDb);
         }
-
-        private Queue CreateSQS()
+        
+        private Queue CreateQueue()
         {
             return new Amazon.CDK.AWS.SQS.Queue(this, "queue", new QueueProps
             {
@@ -38,7 +54,10 @@ namespace Cdk
             });
         }
 
-        private Table CreateDynamoDb()
+        /// <summary>
+        /// Create an Amazon DynamoDb table we can use to store data.
+        /// </summary>
+        private Table CreateDataStore()
         {
             var table = new Amazon.CDK.AWS.DynamoDB.Table(this, "item-storage", new TableProps
             {
@@ -71,38 +90,9 @@ namespace Cdk
         }
 
         /// <summary>
-        /// Dotnet 3.1 Lambda
-        /// </summary>
-        private Function CreateProcessingLambda(Queue ingestionQueue, Table itemsTable)
-        {
-            const string buildConfiguration =
-                #if DEBUG
-                "Debug";
-                #else
-                "Release";
-                #endif
-
-            var processingLambda = new Function(this, "processing-lambda", new FunctionProps
-            {
-                Runtime = Runtime.DOTNET_CORE_3_1,
-                Code = Code.FromAsset($"{nameof(ProcessingLambda)}/bin/{buildConfiguration}/netcoreapp3.1/publish"),
-
-                // Assembly::Type::Method
-                Handler = $"{new ProcessingLambda.Function().GetType().Assembly.GetName().Name}::{nameof(ProcessingLambda.Function)}::{nameof(ProcessingLambda.Function.FunctionHandler)}"
-            });
-
-            // Setup Permissions
-            ingestionQueue.GrantConsumeMessages(processingLambda);
-
-            itemsTable.GrantWriteData(processingLambda);
-
-            return processingLambda;
-        }
-
-        /// <summary>
         /// Dotnet 5 Container Image Lambda + Api Gateway
         /// </summary>
-        private Function CreateIngestionLambda(Queue ingestionQueue)
+        private Function CreateIngestionApiFunction(Queue ingestionQueue)
         {
             var dotnet5Lambda = new Function(this, "ingestion-lambda", new FunctionProps
             {
@@ -130,9 +120,95 @@ namespace Cdk
             return dotnet5Lambda;
         }
         
-
-        private CfnApplication CreateElasticBeanstalkWeb(object ingestionLambda, object dynamoDb)
+        /// <summary>
+        /// Dotnet 3.1 Lambda
+        /// </summary>
+        private Function CreateProcessingFunction(Queue ingestionQueue, Table itemsTable)
         {
+            var processingLambda = new Function(this, "processing-lambda", new FunctionProps
+            {
+                Runtime = Runtime.DOTNET_CORE_3_1,
+                Code = Code.FromAsset($"{nameof(ProcessingLambda)}/bin/{_buildConfiguration}/netcoreapp3.1/publish"),
+
+                // Assembly::Type::Method
+                Handler = $"{new ProcessingLambda.Function().GetType().Assembly.GetName().Name}::{nameof(ProcessingLambda.Function)}::{nameof(ProcessingLambda.Function.FunctionHandler)}"
+            });
+
+            // Setup Permissions
+            ingestionQueue.GrantConsumeMessages(processingLambda);
+
+            itemsTable.GrantWriteData(processingLambda);
+
+            return processingLambda;
+        }
+
+        /// <summary>
+        /// Host website in AWS Fargate
+        /// </summary>
+        /// <param name="ingestionLambda"></param>
+        /// <param name="dynamoDb"></param>
+        /// <returns></returns>
+        private ApplicationLoadBalancedFargateService CreateWebSite(Table dynamoDb)
+        {
+            // define docker registry
+            var ecrRepository = Repository.FromRepositoryName(this, "ECRRepository", "Web-Docker-Image");
+
+            var containerImage = ContainerImage.FromEcrRepository(ecrRepository, "latest");
+
+            // define Fargate Web Task
+            var taskDefinition = new FargateTaskDefinition(this, "WebSiteTaskDefinition", new FargateTaskDefinitionProps
+            {
+                Cpu = _settings.WebHostCpuCount,
+                MemoryLimitMiB = _settings.WebHostMemoryLimit,
+                TaskRole = new Role(this, "TaskRole", new RoleProps
+                {
+                    AssumedBy = new ServicePrincipal("ecs-tasks.amazonaws.com")
+                })
+            });
+                
+
+            
+
+            taskDefinition
+                // attach docker image
+                .AddContainer("Container", new ContainerDefinitionOptions
+                {
+                    Image = containerImage
+                })
+                // and open http ports
+                .AddPortMappings(new PortMapping
+                {
+                    ContainerPort = 80,
+                    Protocol = Amazon.CDK.AWS.ECS.Protocol.TCP
+                });
+
+            // define Fargate Hosting
+            var webSite = new ApplicationLoadBalancedFargateService(this, "FargateService", new ApplicationLoadBalancedFargateServiceProps
+            {
+                Cluster = new Cluster(this, "Cluster", new ClusterProps
+                {
+                    Vpc = Vpc.FromLookup(this, "Vpc", new VpcLookupOptions{ IsDefault = true }),
+                    //Vpc = new Vpc(this, "App-Vpc"),
+                    ClusterName = "WebSiteCluster",
+                }),
+                TaskDefinition = taskDefinition,
+                DesiredCount = _settings.WebHostInstanceCount,
+                ServiceName = "WebSite",
+                AssignPublicIp = true,
+                //SecurityGroups = ecsServiceSecurityGroups.ToArray()
+            });
+            
+            dynamoDb.GrantReadData(webSite.Service.TaskDefinition.TaskRole);
+
+            //todo, write configuration of Ingestion Lambda api endpoint.
+
+            return webSite;
+        }
+
+        private CfnApplication CreateElasticBeanstalk(object ingestionLambda, object dynamoDb)
+        {
+            var currentDirectory = Directory.GetCurrentDirectory();
+
             var deployAsset = new Asset(this, "webDeploy", new AssetProps
             {
                 // Assume we're running at root solution with `cdk deploy`

@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
+using Newtonsoft.Json;
+using Shared.Ingestion;
+using Shared.Storage;
 
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -10,6 +13,8 @@ namespace ProcessingLambda
 {
     public class Function
     {
+        private readonly IItemRepository _itemRepository;
+
         /// <summary>
         /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
         /// the AWS credentials will come from the IAM role associated with the function and the AWS region will be set to the
@@ -40,8 +45,17 @@ namespace ProcessingLambda
         {
             context.Logger.LogLine($"Processed message {message.Body}");
 
-            // TODO: Do interesting work based on the new message
-            await Task.CompletedTask;
+            var request = JsonConvert.DeserializeObject<IngestionMessage>(message.Body);
+
+            //do work on Item
+            var itemData = request.Item.Data.ToUpper();
+
+            //persist
+            await _itemRepository.Upsert(new ItemDataModel
+            {
+                CustomerId = request.CustomerId,
+                ItemData = itemData
+            });
         }
     }
 }

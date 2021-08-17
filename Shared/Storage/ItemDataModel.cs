@@ -8,5 +8,7 @@ namespace Shared.Storage
 {
     public class ItemDataModel
     {
+        public string ItemData { get; set; }
+        public int CustomerId { get; set; }
     }
 }
