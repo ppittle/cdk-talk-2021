@@ -11,8 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessingLambda", "Process
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EB382FE4-F01D-474B-8C8A-0B958C8EB930}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		cdk.json = cdk.json
 		README.md = README.md
+		Web-Dockerfile = Web-Dockerfile
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{6FB4FEB7-7317-4581-8CA0-E177421F8CE7}"

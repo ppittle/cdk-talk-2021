@@ -41,7 +41,7 @@ namespace Cdk
                     Thread.Sleep(TimeSpan.FromMilliseconds(500));
             }
 
-            new AppStack(deploymentSettings, app, "Cdk-Talk-AppStack", new StackProps
+            new AppStack(deploymentSettings, app, "Cdk-Talk-AppStack-beanstalk", new StackProps
             {
                 Env = new Environment
                 {

@@ -7,6 +7,7 @@ using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.DynamoDB;
 using Amazon.CDK.AWS.EC2;
 using Amazon.CDK.AWS.ECR;
+using Amazon.CDK.AWS.Ecr.Assets;
 using Amazon.CDK.AWS.ECS;
 using Amazon.CDK.AWS.ECS.Patterns;
 using Amazon.CDK.AWS.ElasticBeanstalk;
@@ -35,15 +36,15 @@ namespace Cdk
             _settings = settings;
 
             // Step 1: Create Queue
-            var queue = CreateQueue();
+            //var queue = CreateQueue();
 
             var dynamoDb = CreateDataStore();
 
-            var ingestionLambda = CreateIngestionApiFunction(queue);
+            //var ingestionLambda = CreateIngestionApiFunction(queue);
 
-            var processingLambda = CreateProcessingFunction(queue, dynamoDb);
+            //var processingLambda = CreateProcessingFunction(queue, dynamoDb);
 
-            var website = CreateWebSite(dynamoDb);
+            var website = CreateElasticBeanstalk(null, dynamoDb);
         }
         
         private Queue CreateQueue()
@@ -129,7 +130,7 @@ namespace Cdk
             {
                 Runtime = Runtime.DOTNET_CORE_3_1,
                 Code = Code.FromAsset($"{nameof(ProcessingLambda)}/bin/{_buildConfiguration}/netcoreapp3.1/publish"),
-
+                
                 // Assembly::Type::Method
                 Handler = $"{new ProcessingLambda.Function().GetType().Assembly.GetName().Name}::{nameof(ProcessingLambda.Function)}::{nameof(ProcessingLambda.Function.FunctionHandler)}"
             });
@@ -153,8 +154,18 @@ namespace Cdk
             // define docker registry
             var ecrRepository = Repository.FromRepositoryName(this, "ECRRepository", "Web-Docker-Image");
 
-            var containerImage = ContainerImage.FromEcrRepository(ecrRepository, "latest");
+            //var containerImage = ContainerImage.FromEcrRepository(ecrRepository, "latest");
+            var containerImageAsset = new DockerImageAsset(this, "Web-Docker-Container", new DockerImageAssetProps
+            {
+                Directory = ".",
+                File = "Web-Dockerfile",
+                // set our own tag
+                BuildArgs = new Dictionary<string, string>{ {"-t", "latest" } }
+            });
+            containerImageAsset.Repository = ecrRepository;
 
+            var containerImage = ContainerImage.FromDockerImageAsset(containerImageAsset);
+            
             // define Fargate Web Task
             var taskDefinition = new FargateTaskDefinition(this, "WebSiteTaskDefinition", new FargateTaskDefinitionProps
             {
@@ -164,11 +175,10 @@ namespace Cdk
                 {
                     AssumedBy = new ServicePrincipal("ecs-tasks.amazonaws.com")
                 })
-            });
+            }){
+
+            };
                 
-
-            
-
             taskDefinition
                 // attach docker image
                 .AddContainer("Container", new ContainerDefinitionOptions
@@ -205,7 +215,7 @@ namespace Cdk
             return webSite;
         }
 
-        private CfnApplication CreateElasticBeanstalk(object ingestionLambda, object dynamoDb)
+        private CfnEnvironment CreateElasticBeanstalk(object ingestionLambda, object dynamoDb)
         {
             var currentDirectory = Directory.GetCurrentDirectory();
 
@@ -214,8 +224,7 @@ namespace Cdk
                 // Assume we're running at root solution with `cdk deploy`
                 Path = Path.Combine(Directory.GetCurrentDirectory(), @"Web\bin\Debug\net5.0\publish\")
             });
-
-
+            
             var applicationVersion = new CfnApplicationVersion(this, "Web-ApplicationVersion", new CfnApplicationVersionProps
             {
                 ApplicationName = "web",
@@ -254,15 +263,14 @@ namespace Cdk
                 }
             });
 
-            return application;
-
-            /*
+            
             var optionSettingProperties = new List<CfnEnvironment.OptionSettingProperty> {
                    new CfnEnvironment.OptionSettingProperty {
                         Namespace = "aws:autoscaling:launchconfiguration",
                         OptionName =  "IamInstanceProfile",
                         Value = instanceProfile.AttrArn
-                   },
+                   }
+                   /*,
                    new CfnEnvironment.OptionSettingProperty {
                         Namespace = "aws:elasticbeanstalk:environment",
                         OptionName =  "EnvironmentType",
@@ -273,9 +281,10 @@ namespace Cdk
                         Namespace = "aws:elasticbeanstalk:managedactions",
                         OptionName = "ManagedActionsEnabled",
                         Value = settings.ElasticBeanstalkManagedPlatformUpdates.ManagedActionsEnabled.ToString().ToLower()
-                   }
+                   }*/
                 };
-
+            
+            /*
             if(!string.IsNullOrEmpty(settings.InstanceType))
             {
                 optionSettingProperties.Add(new CfnEnvironment.OptionSettingProperty
@@ -308,13 +317,14 @@ namespace Cdk
                         Value = settings.EC2KeyPair
                     }
                 );
-            }
+            }*/
 
             var environment = new CfnEnvironment(this, "Environment", new CfnEnvironmentProps
             {
-                EnvironmentName = settings.EnvironmentName,
-                ApplicationName = settings.BeanstalkApplication.ApplicationName,
-                PlatformArn = settings.ElasticBeanstalkPlatformArn,
+                EnvironmentName = "Web-Environment",
+                ApplicationName = application.ApplicationName,
+                // https://docs.aws.amazon.com/elasticbeanstalk/latest/platforms/platforms-supported.html#platforms-supported.dotnetlinux
+                SolutionStackName = "64bit Amazon Linux 2 v2.2.4 running .NET Core",
                 OptionSettings = optionSettingProperties.ToArray(),
                 // This line is critical - reference the label created in this same stack
                 VersionLabel = applicationVersion.Ref,
@@ -323,7 +333,9 @@ namespace Cdk
             var output = new CfnOutput(this, "EndpointURL", new CfnOutputProps
             {
                 Value = $"http://{environment.AttrEndpointUrl}/"
-            });*/
+            });
+
+            return environment;
         }
     }
 }
