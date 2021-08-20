@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Mime;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
@@ -41,11 +42,11 @@ namespace Cdk
 
             var dynamoDb = CreateDataStore();
 
-            var ingestionLambda = CreateIngestionApiFunction(queue);
+            var ingestionLambdaApi = CreateIngestionApiFunction(queue);
 
             var processingLambda = CreateProcessingFunction(queue, dynamoDb);
 
-            var website = CreateElasticBeanstalk(null, dynamoDb);
+            var website = CreateElasticBeanstalk(ingestionLambdaApi, dynamoDb);
         }
         
         private Queue CreateQueue()
@@ -94,7 +95,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 5 Container Image Lambda + Api Gateway
         /// </summary>
-        private Function CreateIngestionApiFunction(Queue ingestionQueue)
+        private LambdaRestApi CreateIngestionApiFunction(Queue ingestionQueue)
         {
             var dotnet5Lambda = new Function(this, "ingestion-lambda", new FunctionProps
             {
@@ -104,14 +105,23 @@ namespace Cdk
                     //Assembly::Type::Method
                     Cmd = new[]
                     {
-                        $"{new IngressLambda.Functions().GetType().Assembly.GetName().Name}::{nameof(IngressLambda.Functions)}::{nameof(IngressLambda.Functions.Get)}"
+                        // Assembly
+                        $"{typeof(IngressLambda.Functions).Assembly.GetName().Name}::" +
+                        // Full Type
+                        $"{typeof(IngressLambda.Functions).Namespace}::" +
+                        // Method
+                        $"{nameof(IngressLambda.Functions.Get)}"
                     }
                 }),
-                Handler = Handler.FROM_IMAGE
+                Handler = Handler.FROM_IMAGE,
+                Environment = new Dictionary<string, string>
+                {
+                    {nameof(IngressLambda.Settings.QueueUrl), ingestionQueue.QueueUrl}
+                }
             });
 
             // setup api gateway
-            new LambdaRestApi(this, "ingestion-lambda-api-gateway", new LambdaRestApiProps
+            var api = new LambdaRestApi(this, "ingestion-lambda-api-gateway", new LambdaRestApiProps
             {
                 Handler = dotnet5Lambda
             });
@@ -119,7 +129,7 @@ namespace Cdk
             // grant write access to queue
             ingestionQueue.GrantSendMessages(dotnet5Lambda);
 
-            return dotnet5Lambda;
+            return api;
         }
         
         /// <summary>
@@ -216,13 +226,14 @@ namespace Cdk
             return webSite;
         }
 
-        private CfnEnvironment CreateElasticBeanstalk(object ingestionLambda, object dynamoDb)
+        private CfnEnvironment CreateElasticBeanstalk(LambdaRestApi ingestionLambdaApi, Table dynamoDb)
         {
             var currentDirectory = Directory.GetCurrentDirectory();
 
             var deployAsset = new Asset(this, "webDeploy", new AssetProps
             {
                 // Assume we're running at root solution with `cdk deploy`
+                // also requires cdk command to publish web project
                 Path = Path.Combine(Directory.GetCurrentDirectory(), @"Web\bin\Debug\net5.0\publish\")
             });
             
@@ -264,26 +275,37 @@ namespace Cdk
                 }
             });
 
-            
-            var optionSettingProperties = new List<CfnEnvironment.OptionSettingProperty> {
-                   new CfnEnvironment.OptionSettingProperty {
-                        Namespace = "aws:autoscaling:launchconfiguration",
-                        OptionName =  "IamInstanceProfile",
-                        Value = instanceProfile.AttrArn
-                   }
-                   /*,
-                   new CfnEnvironment.OptionSettingProperty {
-                        Namespace = "aws:elasticbeanstalk:environment",
-                        OptionName =  "EnvironmentType",
-                        Value = settings.EnvironmentType
-                   },
-                   new CfnEnvironment.OptionSettingProperty
-                   {
-                        Namespace = "aws:elasticbeanstalk:managedactions",
-                        OptionName = "ManagedActionsEnabled",
-                        Value = settings.ElasticBeanstalkManagedPlatformUpdates.ManagedActionsEnabled.ToString().ToLower()
-                   }*/
-                };
+            var optionSettingProperties = new List<CfnEnvironment.OptionSettingProperty>
+            {
+                new CfnEnvironment.OptionSettingProperty
+                {
+                    Namespace = "aws:autoscaling:launchconfiguration",
+                    OptionName = "IamInstanceProfile",
+                    Value = instanceProfile.AttrArn
+                },
+
+                // set custom environment variables
+                new CfnEnvironment.OptionSettingProperty
+                {
+                    Namespace = "aws:elasticbeanstalk:application:environment",
+                    OptionName = nameof(Web.Settings.IngestionApiUrl),
+                    Value = ingestionLambdaApi.Url
+                }
+
+
+                /*,
+                new CfnEnvironment.OptionSettingProperty {
+                     Namespace = "aws:elasticbeanstalk:environment",
+                     OptionName =  "EnvironmentType",
+                     Value = settings.EnvironmentType
+                },
+                new CfnEnvironment.OptionSettingProperty
+                {
+                     Namespace = "aws:elasticbeanstalk:managedactions",
+                     OptionName = "ManagedActionsEnabled",
+                     Value = settings.ElasticBeanstalkManagedPlatformUpdates.ManagedActionsEnabled.ToString().ToLower()
+                }*/
+            };
             
             /*
             if(!string.IsNullOrEmpty(settings.InstanceType))
@@ -328,7 +350,7 @@ namespace Cdk
                 SolutionStackName = "64bit Amazon Linux 2 v2.2.4 running .NET Core",
                 OptionSettings = optionSettingProperties.ToArray(),
                 // This line is critical - reference the label created in this same stack
-                VersionLabel = applicationVersion.Ref,
+                VersionLabel = applicationVersion.Ref
             });
 
             var output = new CfnOutput(this, "EndpointURL", new CfnOutputProps
@@ -336,6 +358,9 @@ namespace Cdk
                 Value = $"http://{environment.AttrEndpointUrl}/"
             });
 
+            
+            dynamoDb.GrantReadData(role);
+            
             return environment;
         }
     }

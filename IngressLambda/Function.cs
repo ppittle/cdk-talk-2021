@@ -23,6 +23,9 @@ namespace IngressLambda
 
 
         /// <summary>
+        /// ********************
+        /// Not Called Frequently and Kicks off a longer running background process, so Lambda is a good fit 
+        /// ****************
         /// A Lambda function to respond to HTTP Get methods from API Gateway
         /// </summary>
         /// <param name="request"></param>

@@ -34,11 +34,14 @@ namespace Cdk
                     .Get<DeploymentSettings>();
 
             // TODO: Recommended way to debug?
-            if (deploymentSettings.AttachDebugger)
+            if (deploymentSettings.AttachDebugger  || app.Node.TryGetContext("debug")?.ToString()  == "true")
             {
+                Debugger.Launch();
+
                 Console.WriteLine($"Waiting for Debugger: {Process.GetCurrentProcess().Id}");
                 while (!Debugger.IsAttached)
                     Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                
             }
 
             new AppStack(deploymentSettings, app, "Cdk-Talk-AppStack-beanstalk", new StackProps
