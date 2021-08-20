@@ -1,0 +1,92 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<div>
+    <h2 class="display-3">Data: </h2>
+    <form>
+        <div class="form-group">
+            <label >Customer Id</label>
+            <input type class="form-control" id="txtCustomerId" required>
+            <div class="invalid-feedback">
+                Please add a customer id.
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Item String</label>
+            <input type="password" class="form-control" id="txtItemString" >
+        </div>
+        <button type="submit" id="btnSubmit" class="btn btn-primary">Submit</button>
+        <button type="submit" id="btnQuery" class="btn btn-secondary">Query All</button>
+    </form>
+</div>
+<div>
+    <div id="loading" style="display: none">Loading ...</div>
+    <div id="allItems"></div>
+
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded",
+        function(event) {
+            $(function() {
+                $("#btnQuery").click(function() {
+
+                    var customerId = $("#txtCustomerId").val();
+
+                    $("#allItems").fadeOut(function() {
+
+                        $("#loading").fadeIn();
+
+                        $.ajax({
+                            url: '/api/item/' + customerId,
+                            success: function(results) {
+                                $("#allItems").html(renderTable(results));
+                            },
+                            error: function(xhr, status, error) {
+                                console.log(xhr);
+                                $("#allItems").html("Query failed: <br/>" + xhr.status + "<br/> " + xhr.responseText);
+                            },
+                            complete: function() {
+                                
+                                $("#loading").fadeOut(function() { $("#allItems").fadeIn(); });
+                            }
+                        });
+                    });
+
+                    return false;
+                });
+            });
+        });
+
+    function renderTable(items) {
+        var html = `
+            <table class="table">
+                <thead><tr>
+                <th scope="col">#</th>
+                <th scope="col">Item Data</th>
+                <th scope="col">ContainsHelloWorld</th>
+                <th scope="col">IsPalindrome</th>
+                </tr></thead>
+            `;
+
+        items.forEach(function(item, idx) {
+            html += "<tr>";
+            html += `<td>${idx}</td>`;
+            html += `<td>${item.itemData}</td>`;
+            html += `<td>${item.containsHelloWorld}</td>`;
+            html += `<td>${item.isPalindrome}</td>`;
+            html += "</tr>";
+        });
+
+        html += "</table>";
+
+        return html;
+    }
+</script>

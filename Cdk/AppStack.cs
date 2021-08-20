@@ -15,6 +15,7 @@ using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.S3.Assets;
 using Amazon.CDK.AWS.SQS;
+using Shared.Storage;
 using Attribute = Amazon.CDK.AWS.DynamoDB.Attribute;
 
 namespace Cdk
@@ -36,13 +37,13 @@ namespace Cdk
             _settings = settings;
 
             // Step 1: Create Queue
-            //var queue = CreateQueue();
+            var queue = CreateQueue();
 
             var dynamoDb = CreateDataStore();
 
-            //var ingestionLambda = CreateIngestionApiFunction(queue);
+            var ingestionLambda = CreateIngestionApiFunction(queue);
 
-            //var processingLambda = CreateProcessingFunction(queue, dynamoDb);
+            var processingLambda = CreateProcessingFunction(queue, dynamoDb);
 
             var website = CreateElasticBeanstalk(null, dynamoDb);
         }
@@ -62,20 +63,20 @@ namespace Cdk
         {
             var table = new Amazon.CDK.AWS.DynamoDB.Table(this, "item-storage", new TableProps
             {
-                TableName = "items",
+                TableName = Shared.Storage.Constants.ItemTableName,
                 BillingMode = BillingMode.PROVISIONED,
                 ReadCapacity = 1,
                 WriteCapacity = 1,
                 RemovalPolicy = RemovalPolicy.DESTROY,
                 PartitionKey = new Attribute
                 {
-                    Name = "id",
-                    Type = AttributeType.STRING
+                    Name = nameof(ItemDataModel.CustomerId),
+                    Type = AttributeType.NUMBER
                 },
                 SortKey = new Attribute
                 {
-                    Name = "createdAt",
-                    Type = AttributeType.NUMBER
+                    Name = nameof(ItemDataModel.CreatedDate),
+                    Type = AttributeType.STRING
                 }
             });
 

@@ -8,7 +8,12 @@ namespace Shared.Storage
 {
     public class ItemDataModel
     {
-        public string ItemData { get; set; }
         public int CustomerId { get; set; }
+        public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.Now;
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string ItemData { get; set; }
+
+        public bool ContainsHelloWorld { get; set; }
+        public bool IsPalindrome { get; set; }
     }
 }
