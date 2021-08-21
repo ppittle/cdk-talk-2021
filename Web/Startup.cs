@@ -28,6 +28,9 @@ namespace Web
         {
             services.AddControllersWithViews();
 
+            services.AddOptions();
+            services.Configure<Settings>(Configuration);
+
             // TODO: figure out why Web throws an exception about Microsoft.Bcl.Async missing
             // if Shared is netstandard2.0
             services.AddCdkTalk(

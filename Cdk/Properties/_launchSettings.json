@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Cdk": {
+      "commandName": "Executable",
+      "executablePath": "pwsh.exe",
+      "commandLineArgs": "-Command \"Set-Location $(SolutionDir); npx cdk deploy -c debug=true --require-approval-never\""
+    }
+  }
+}

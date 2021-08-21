@@ -12,29 +12,58 @@
     <form>
         <div class="form-group">
             <label >Customer Id</label>
-            <input type class="form-control" id="txtCustomerId" required>
+            <input class="form-control" id="txtCustomerId" required>
             <div class="invalid-feedback">
                 Please add a customer id.
             </div>
         </div>
         <div class="form-group">
             <label>Item String</label>
-            <input type="password" class="form-control" id="txtItemString" >
+            <input class="form-control" id="txtItemString" >
         </div>
         <button type="submit" id="btnSubmit" class="btn btn-primary">Submit</button>
-        <button type="submit" id="btnQuery" class="btn btn-secondary">Query All</button>
+        <button type="submit" id="btnQuery" class="btn btn-secondary float-right">Query All</button>
     </form>
 </div>
 <div>
     <div id="loading" style="display: none">Loading ...</div>
     <div id="allItems"></div>
-
 </div>
-
 
 <script>
     document.addEventListener("DOMContentLoaded",
         function(event) {
+
+            // btnSubmit Click Handler
+            $("#btnSubmit").click(function() {
+                $("#btnSubmit").prop('disabled', true);
+                $("#btnSubmit").html("   ...   ");
+
+                var ingestionUrl = '@ViewData["IngestionApiUrl"]';
+
+                var customerId = $("#txtCustomerId").val();
+                var data = $("#txtItemString").val();
+
+                $.ajax({
+                    url: ingestionUrl,
+                    method: "POST",
+                    data: JSON.stringify({ "customerId": customerId, "itemData": data }),
+                    contentType: "application/json; charset=utf-8",
+                    success: function(results) {
+                        $("#txtItemString").val("");
+                    },
+                    complete: function(xhr, status) {
+                        alert(status);
+
+                        $("#btnSubmit").removeAttr('disabled');
+                        $("#btnSubmit").html("Submit");
+                    }
+                });
+
+                return false;
+            });
+
+            // btnQuery Click Handler
             $(function() {
                 $("#btnQuery").click(function() {
 

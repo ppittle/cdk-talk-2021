@@ -34,11 +34,21 @@ namespace IngressLambda
         {
             context.Logger.LogLine("Get Request\n");
 
+            var json = request.Body;
+
+
             var response = new APIGatewayProxyResponse
             {
-                StatusCode = (int)HttpStatusCode.OK,
-                Body = "Hello AWS Serverless",
-                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
+                StatusCode = (int) HttpStatusCode.OK,
+                Body = "Hello AWS Serverless - with cors headers: " + json,
+                Headers = new Dictionary<string, string>
+                {
+                    // add CORS headers
+                    {"Access-Control-Allow-Headers", "Content-Type"},
+                    {"Access-Control-Allow-Origin", "*"},
+                    {"Access-Control-Allow-Methods", "OPTIONS,POST,GET"},
+                    {"Content-Type", "text/plain"}
+                }
             };
 
             return response;

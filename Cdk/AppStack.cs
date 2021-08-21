@@ -108,7 +108,7 @@ namespace Cdk
                         // Assembly
                         $"{typeof(IngressLambda.Functions).Assembly.GetName().Name}::" +
                         // Full Type
-                        $"{typeof(IngressLambda.Functions).Namespace}::" +
+                        $"{typeof(IngressLambda.Functions).FullName}::" +
                         // Method
                         $"{nameof(IngressLambda.Functions.Get)}"
                     }
@@ -120,15 +120,23 @@ namespace Cdk
                 }
             });
 
-            // setup api gateway
-            var api = new LambdaRestApi(this, "ingestion-lambda-api-gateway", new LambdaRestApiProps
-            {
-                Handler = dotnet5Lambda
-            });
-
             // grant write access to queue
             ingestionQueue.GrantSendMessages(dotnet5Lambda);
 
+            // setup api gateway
+            var api = new LambdaRestApi(this, "ingestion-lambda-api-gateway", new LambdaRestApiProps
+            {
+                Handler = dotnet5Lambda,
+                // set up CORS (TODO: unsure if this is necessary.  it MUST be set in lambda, unclear if this section helps)
+                DefaultCorsPreflightOptions = new CorsOptions
+                {
+                    AllowHeaders = new []{ "Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key" },
+                    AllowMethods = new []{ "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE" },
+                    AllowCredentials =  true,
+                    AllowOrigins = new []{ "*" }
+                }
+            });
+            
             return api;
         }
         
@@ -143,7 +151,13 @@ namespace Cdk
                 Code = Code.FromAsset($"{nameof(ProcessingLambda)}/bin/{_buildConfiguration}/netcoreapp3.1/publish"),
                 
                 // Assembly::Type::Method
-                Handler = $"{new ProcessingLambda.Function().GetType().Assembly.GetName().Name}::{nameof(ProcessingLambda.Function)}::{nameof(ProcessingLambda.Function.FunctionHandler)}"
+                Handler = 
+                    // Assembly
+                    $"{typeof(ProcessingLambda.Function).Assembly.GetName().Name}::" +
+                    // Full Type
+                    $"{typeof(ProcessingLambda.Function).FullName}::" +
+                    // Method
+                    $"{nameof(ProcessingLambda.Function.FunctionHandler)}"
             });
 
             // Setup Permissions

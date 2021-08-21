@@ -34,6 +34,7 @@ namespace Cdk
                     .Get<DeploymentSettings>();
 
             // TODO: Recommended way to debug?
+            // use `cdk deploy -c debug=true`
             if (deploymentSettings.AttachDebugger  || app.Node.TryGetContext("debug")?.ToString()  == "true")
             {
                 Debugger.Launch();
