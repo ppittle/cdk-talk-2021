@@ -114,9 +114,10 @@ namespace Cdk
                     }
                 }),
                 Handler = Handler.FROM_IMAGE,
+                Timeout = Duration.Seconds(30),
                 Environment = new Dictionary<string, string>
                 {
-                    {nameof(IngressLambda.Settings.QueueUrl), ingestionQueue.QueueUrl}
+                    {nameof(Shared.Ingestion.IngestionQueueSettings.QueueUrl), ingestionQueue.QueueUrl}
                 }
             });
 
@@ -157,7 +158,9 @@ namespace Cdk
                     // Full Type
                     $"{typeof(ProcessingLambda.Function).FullName}::" +
                     // Method
-                    $"{nameof(ProcessingLambda.Function.FunctionHandler)}"
+                    $"{nameof(ProcessingLambda.Function.FunctionHandler)}",
+
+                Timeout = Duration.Seconds(45)
             });
 
             // Setup Permissions

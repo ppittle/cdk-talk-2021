@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Shared.Ingestion;
+using Amazon.SQS;
+using Amazon.SQS.Model;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
-namespace Shared
+namespace Shared.Ingestion
 {
     public interface IIngestionQueueClient
     {
@@ -12,9 +15,22 @@ namespace Shared
     
     internal class IngestionQueueClient : IIngestionQueueClient
     {
-        public Task Write(IngestionMessage message)
+        private readonly IAmazonSQS _sqsClient;
+        private readonly IOptions<IngestionQueueSettings> _options;
+
+        public IngestionQueueClient(IAmazonSQS sqsClient, IOptions<IngestionQueueSettings> options)
         {
-            throw new NotImplementedException();
+            _sqsClient = sqsClient;
+            _options = options;
+        }
+
+        public async Task Write(IngestionMessage message)
+        {
+            await _sqsClient.SendMessageAsync(new SendMessageRequest
+            {
+                QueueUrl = _options.Value.QueueUrl,
+                MessageBody = JsonConvert.SerializeObject(message)
+            });
         }
 
         public Task<IngestionMessage> Read()

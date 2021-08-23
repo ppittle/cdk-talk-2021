@@ -41,7 +41,7 @@
 
                 var ingestionUrl = '@ViewData["IngestionApiUrl"]';
 
-                var customerId = $("#txtCustomerId").val();
+                var customerId = parseInt($("#txtCustomerId").val());
                 var data = $("#txtItemString").val();
 
                 $.ajax({
