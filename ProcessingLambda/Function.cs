@@ -1,10 +1,11 @@
 using System.Threading.Tasks;
+using Amazon.Extensions.NETCore.Setup;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shared.Ingestion;
 using Shared.Storage;
-
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -13,7 +14,7 @@ namespace ProcessingLambda
 {
     public class Function
     {
-        private readonly IItemRepository _itemRepository;
+        private readonly App _app;
 
         /// <summary>
         /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
@@ -22,7 +23,17 @@ namespace ProcessingLambda
         /// </summary>
         public Function()
         {
+            var config =
+                new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .Build();
 
+            var services =
+                new ServiceCollection()
+                    .AddCdkTalk(new AWSOptions())
+                    .AddTransient<App>();
+
+            _app = services.BuildServiceProvider().GetService<App>();
         }
 
 
@@ -37,25 +48,8 @@ namespace ProcessingLambda
         {
             foreach(var message in evnt.Records)
             {
-                await ProcessMessageAsync(message, context);
+                await _app.ProcessMessageAsync(message, context);
             }
-        }
-
-        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
-        {
-            context.Logger.LogLine($"Processed message {message.Body}");
-
-            var request = JsonConvert.DeserializeObject<IngestionMessage>(message.Body);
-
-            //do work on Item
-            var itemData = request.Item.Data.ToUpper();
-
-            //persist
-            await _itemRepository.Upsert(new ItemDataModel
-            {
-                CustomerId = request.CustomerId,
-                ItemData = itemData
-            });
         }
     }
 }

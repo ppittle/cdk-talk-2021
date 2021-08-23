@@ -14,6 +14,7 @@ using Amazon.CDK.AWS.ECS.Patterns;
 using Amazon.CDK.AWS.ElasticBeanstalk;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
+using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.S3.Assets;
 using Amazon.CDK.AWS.SQS;
 using Shared.Storage;
@@ -114,7 +115,7 @@ namespace Cdk
                     }
                 }),
                 Handler = Handler.FROM_IMAGE,
-                Timeout = Duration.Seconds(30),
+                Timeout = Duration.Seconds(15),
                 Environment = new Dictionary<string, string>
                 {
                     {nameof(Shared.Ingestion.IngestionQueueSettings.QueueUrl), ingestionQueue.QueueUrl}
@@ -160,12 +161,13 @@ namespace Cdk
                     // Method
                     $"{nameof(ProcessingLambda.Function.FunctionHandler)}",
 
-                Timeout = Duration.Seconds(45)
+                Timeout = Duration.Seconds(30)
             });
 
-            // Setup Permissions
-            ingestionQueue.GrantConsumeMessages(processingLambda);
+            // Configure lambda to process ingestion queue messages
+            processingLambda.AddEventSource(new SqsEventSource(ingestionQueue));
 
+            // Setup permissions
             itemsTable.GrantWriteData(processingLambda);
 
             return processingLambda;

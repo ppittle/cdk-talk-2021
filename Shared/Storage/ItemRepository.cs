@@ -27,9 +27,13 @@ namespace Shared.Storage
             _dynamoDb = dynamoDb;
         }
 
-        public Task Upsert(ItemDataModel itemDataModel)
+        public async Task Upsert(ItemDataModel itemDataModel)
         {
-            throw new NotImplementedException();
+            await _dynamoDb.PutItemAsync(new PutItemRequest
+            {
+                TableName = Constants.ItemTableName,
+                Item = Serialize(itemDataModel)
+            });
         }
 
         public async Task<List<ItemDataModel>> GetAll(int customerId)
@@ -56,9 +60,18 @@ namespace Shared.Storage
                     .ToListAsync();
         }
 
-        private void Serialize(ItemDataModel model)
+        private Dictionary<string, AttributeValue> Serialize(ItemDataModel model)
         {
-
+            // TODO is there a better way?
+            return new Dictionary<string, AttributeValue>
+            {
+                {nameof(ItemDataModel.CustomerId), new AttributeValue{ N = model.CustomerId.ToString()} },
+                {nameof(ItemDataModel.CreatedDate), new AttributeValue{ S = model.CreatedDate.ToString("O")} },
+                {nameof(ItemDataModel.Id), new AttributeValue{ S = model.Id.ToString()} },
+                {nameof(ItemDataModel.ContainsHelloWorld), new AttributeValue{ BOOL = model.ContainsHelloWorld} },
+                {nameof(ItemDataModel.IsPalindrome), new AttributeValue{ BOOL = model.IsPalindrome} },
+                {nameof(ItemDataModel.ItemData), new AttributeValue{ S = model.ItemData} }
+            };
         }
 
         private ItemDataModel Deserialize(Dictionary<string, AttributeValue> item)
