@@ -7,7 +7,7 @@
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
 
-<div>
+<div lass="jumbotron">
     <h2 class="display-3">Data: </h2>
     <form>
         <div class="form-group">
@@ -22,10 +22,14 @@
             <input class="form-control" id="txtItemString" >
         </div>
         <button type="submit" id="btnSubmit" class="btn btn-primary">Submit</button>
-        <button type="submit" id="btnQuery" class="btn btn-secondary float-right">Query All</button>
     </form>
+    <div style="min-height: 100px;">
+        <strong id="lblResults" style="display: none"></strong>
+    </div>
 </div>
+<hr class="my-4">
 <div>
+    <button type="button" id="btnQuery" class="btn btn-info">Query All</button>
     <div id="loading" style="display: none">Loading ...</div>
     <div id="allItems"></div>
 </div>
@@ -39,25 +43,29 @@
                 $("#btnSubmit").prop('disabled', true);
                 $("#btnSubmit").html("   ...   ");
 
-                var ingestionUrl = '@ViewData["IngestionApiUrl"]';
+                $("#lblResults").fadeOut(function() {
 
-                var customerId = parseInt($("#txtCustomerId").val());
-                var data = $("#txtItemString").val();
+                    var ingestionUrl = '@ViewData["IngestionApiUrl"]';
 
-                $.ajax({
-                    url: ingestionUrl,
-                    method: "POST",
-                    data: JSON.stringify({ "customerId": customerId, "itemData": data }),
-                    contentType: "application/json; charset=utf-8",
-                    success: function(results) {
-                        $("#txtItemString").val("");
-                    },
-                    complete: function(xhr, status) {
-                        alert(status);
+                    var customerId = parseInt($("#txtCustomerId").val());
+                    var data = $("#txtItemString").val();
 
-                        $("#btnSubmit").removeAttr('disabled');
-                        $("#btnSubmit").html("Submit");
-                    }
+                    $.ajax({
+                        url: ingestionUrl,
+                        method: "POST",
+                        data: JSON.stringify({ "customerId": customerId, "itemData": data }),
+                        contentType: "application/json; charset=utf-8",
+                        success: function(results) {
+                            $("#txtItemString").val("");
+                        },
+                        complete: function(xhr, status) {
+                            $("#lblResults").html(status);
+                            $("#lblResults").fadeIn();
+
+                            $("#btnSubmit").removeAttr('disabled');
+                            $("#btnSubmit").html("Submit");
+                        }
+                    });
                 });
 
                 return false;

@@ -13,7 +13,9 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "IngestionApiUrl": "https://nd447j3g75.execute-api.eu-north-1.amazonaws.com/prod/"
+        "IngestionApiUrl": "https://nd447j3g75.execute-api.eu-north-1.amazonaws.com/prod/",
+        "AWS_PROFILE": "pittle",
+        "AWS_REGION" :  "eu-north-1" 
 
       }
     },
