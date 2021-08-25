@@ -14,6 +14,9 @@ using Shared.Storage;
 
 namespace IngressLambda
 {
+    /// <summary>
+    /// TODO dleete aws-lambda-tools-defaults.json and serverless.template
+    /// </summary>
     public class Functions
     {
         private readonly App _app;
@@ -30,7 +33,7 @@ namespace IngressLambda
 
             var services =
                 new ServiceCollection()
-                    .AddCdkTalk(new AWSOptions())
+                    .AddCdkTalk()
                     .AddTransient<App>();
 
             services.AddOptions();
@@ -43,6 +46,8 @@ namespace IngressLambda
         /// ********************
         /// 1.  Api Endpoint is Not Called Frequently and Kicks off a longer running background process, so Lambda is a good fit
         /// 2.  Do a rename as part of the talk to show power of directly referencing method name in CDK?
+        ///       WARNING: Call out a) don't do this on storage b) be careful with green/blue deployments.  This helps keep things in sync, but be careful when renaming resources.
+        ///           ie this is before we go live :)
         /// ****************
         /// A Lambda function to respond to HTTP Get methods from API Gateway
         /// </summary>

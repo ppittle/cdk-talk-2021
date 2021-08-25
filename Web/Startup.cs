@@ -33,9 +33,7 @@ namespace Web
 
             // TODO: figure out why Web throws an exception about Microsoft.Bcl.Async missing
             // if Shared is netstandard2.0
-            services.AddCdkTalk(
-                //new AWSOptions { Profile = "pittle", Region = RegionEndpoint.EUNorth1 }
-                new AWSOptions());
+            services.AddCdkTalk();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

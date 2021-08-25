@@ -30,7 +30,7 @@ namespace ProcessingLambda
 
             var services =
                 new ServiceCollection()
-                    .AddCdkTalk(new AWSOptions())
+                    .AddCdkTalk()
                     .AddTransient<App>();
 
             _app = services.BuildServiceProvider().GetService<App>();

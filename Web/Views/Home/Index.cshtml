@@ -21,7 +21,7 @@
             <label>Item String</label>
             <input class="form-control" id="txtItemString" >
         </div>
-        <button type="submit" id="btnSubmit" class="btn btn-primary">Submit</button>
+        <button type="submit" id="btnSubmit" class="btn btn-primary">Ingest & Analyze</button>
     </form>
     <div style="min-height: 100px;">
         <strong id="lblResults" style="display: none"></strong>
@@ -59,7 +59,7 @@
                             $("#txtItemString").val("");
                         },
                         complete: function(xhr, status) {
-                            $("#lblResults").html(status);
+                            $("#lblResults").html(status +": " + xhr.responseText);
                             $("#lblResults").fadeIn();
 
                             $("#btnSubmit").removeAttr('disabled');

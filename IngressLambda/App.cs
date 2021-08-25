@@ -72,7 +72,6 @@ namespace IngressLambda
         private async Task QueueIngestionRequest(IngestionModel model)
         {
             // simulate performing some business logic.
-
             if (model.CustomerId <= 0)
                 throw new ArgumentException("Invalid Customer Id");
 

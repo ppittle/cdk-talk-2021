@@ -26,7 +26,9 @@ namespace ProcessingLambda
             {
                 var request = JsonConvert.DeserializeObject<IngestionMessage>(message.Body);
 
-                await _itemRepository.Upsert(ProcessItemData(request));
+                var model = ProcessItemData(request);
+
+                await _itemRepository.Upsert(model);
 
                 context.Logger.LogLine($"[{GetType().FullName}] Processed message {message.Body}");
             }

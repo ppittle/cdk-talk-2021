@@ -10,6 +10,7 @@ namespace Shared.Ingestion
     public interface IIngestionQueueClient
     {
         Task Write(IngestionMessage message);
+        // TODO delete
         Task<IngestionMessage> Read();
     }
     

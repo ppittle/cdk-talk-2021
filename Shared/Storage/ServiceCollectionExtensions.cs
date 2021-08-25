@@ -8,12 +8,13 @@ namespace Shared.Storage
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddCdkTalk(this IServiceCollection services, AWSOptions awsOptions)
+        // TODO - inline only what's needed, instead of having an abstraction
+        public static IServiceCollection AddCdkTalk(this IServiceCollection services)
         {
-            services.AddDefaultAWSOptions(awsOptions);
-
             services.AddSingleton<IIngestionQueueClient, IngestionQueueClient>();
             services.AddSingleton<IItemRepository, ItemRepository>();
+
+            // rely on using the default aws credential fallback
             services.AddAWSService<IAmazonDynamoDB>();
             services.AddAWSService<IAmazonSQS>();
 

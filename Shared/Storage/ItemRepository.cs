@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 
 namespace Shared.Storage
 {
     public static class Constants
     {
+        // TODO, let CDK generate table name?  that way multiple 'stacks' can be deployed in the same region
         public const string ItemTableName = "items";
     }
 
@@ -48,6 +50,10 @@ namespace Shared.Storage
                 }
             };
 
+            // new Amazon.DynamoDBv2.DataModel.DynamoDBContext(_dynamoDb).QueryAsync
+            // or
+            // Amazon.DynamoDBv2.DocumentModel.Document.FromAttributeMap().to
+
             return
                 await _dynamoDb
                     .Paginators
@@ -62,6 +68,8 @@ namespace Shared.Storage
 
         private Dictionary<string, AttributeValue> Serialize(ItemDataModel model)
         {
+
+
             // TODO is there a better way?
             return new Dictionary<string, AttributeValue>
             {
@@ -76,6 +84,8 @@ namespace Shared.Storage
 
         private ItemDataModel Deserialize(Dictionary<string, AttributeValue> item)
         {
+            
+
             // TODO is there a better way?
             var model = new ItemDataModel();
 

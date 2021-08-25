@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
+using System.Threading.Tasks;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.DynamoDB;
@@ -48,12 +49,16 @@ namespace Cdk
             var processingLambda = CreateProcessingFunction(queue, dynamoDb);
 
             var website = CreateElasticBeanstalk(ingestionLambdaApi, dynamoDb);
+
+            // TODO call out how you'd probably want to use a Load Balancer and put website and lambda 
+            // behind the same ALB.  This would use the same top level domain, and make it so CORS setup isn't necessary.
         }
         
         private Queue CreateQueue()
         {
             return new Amazon.CDK.AWS.SQS.Queue(this, "queue", new QueueProps
             {
+                // todo - add stack name suffix
                 QueueName = "ingestion-queue"
             });
         }
@@ -65,10 +70,9 @@ namespace Cdk
         {
             var table = new Amazon.CDK.AWS.DynamoDB.Table(this, "item-storage", new TableProps
             {
+                // TODO - switch to "Items-{props.StackName}"
                 TableName = Shared.Storage.Constants.ItemTableName,
-                BillingMode = BillingMode.PROVISIONED,
-                ReadCapacity = 1,
-                WriteCapacity = 1,
+                BillingMode = BillingMode.PAY_PER_REQUEST,  // <--- can call out auto scaling capability of dynamodb, delay tuning until we have a lot of usage
                 RemovalPolicy = RemovalPolicy.DESTROY,
                 PartitionKey = new Attribute
                 {
@@ -81,14 +85,6 @@ namespace Cdk
                     Type = AttributeType.STRING
                 }
             });
-
-            var writeAutoScaling = table.AutoScaleWriteCapacity(new EnableScalingProps
-            {
-                MinCapacity = 1,
-                MaxCapacity = 3
-            });
-
-            writeAutoScaling.ScaleOnUtilization(new UtilizationScalingProps{ TargetUtilizationPercent = 70 });
 
             return table;
         }
@@ -121,10 +117,10 @@ namespace Cdk
                     {nameof(Shared.Ingestion.IngestionQueueSettings.QueueUrl), ingestionQueue.QueueUrl}
                 }
             });
-
+            
             // grant write access to queue
             ingestionQueue.GrantSendMessages(dotnet5Lambda);
-
+            
             // setup api gateway
             var api = new LambdaRestApi(this, "ingestion-lambda-api-gateway", new LambdaRestApiProps
             {
@@ -247,13 +243,11 @@ namespace Cdk
 
         private CfnEnvironment CreateElasticBeanstalk(LambdaRestApi ingestionLambdaApi, Table dynamoDb)
         {
-            var currentDirectory = Directory.GetCurrentDirectory();
-
             var deployAsset = new Asset(this, "webDeploy", new AssetProps
             {
                 // Assume we're running at root solution with `cdk deploy`
                 // also requires cdk command to publish web project
-                Path = Path.Combine(Directory.GetCurrentDirectory(), @"Web\bin\Debug\net5.0\publish\")
+                Path = Path.Combine(Directory.GetCurrentDirectory(), @$"Web\bin\{_buildConfiguration}\net5.0\publish\")
             });
             
             var applicationVersion = new CfnApplicationVersion(this, "Web-ApplicationVersion", new CfnApplicationVersionProps
