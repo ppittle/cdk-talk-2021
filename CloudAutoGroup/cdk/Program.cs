@@ -10,7 +10,7 @@ namespace Cdk
         public static void Main(string[] args)
         {
             var app = new App();
-            new CdkStack(app, "CdkStack", new StackProps
+            new TVCampaignStack(app, "TVCampaignStack", new StackProps
             {
                 // If you don't specify 'env', this stack will be environment-agnostic.
                 // Account/Region-dependent features and context lookups will not work,
