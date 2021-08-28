@@ -1,8 +1,12 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
+using Amazon.CDK.AWS.ElasticBeanstalk;
+using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
+using Amazon.CDK.AWS.S3.Assets;
 using RequestQuoteApiFunction = CloudAutoGroup.TVCampaign.RequestQuoteApi.Functions;
 using RequestQuoteProcessorFunction = CloudAutoGroup.TVCampaign.RequestQuoteProcessor.Function;
 
@@ -22,6 +26,8 @@ namespace Cdk
             CreateRequestQuoteApiHost();
 
             CreateRequestQuoteQueueProcessorHost();
+
+            CreateWebsiteHost();
         }
 
         /// <summary>
@@ -80,6 +86,77 @@ namespace Cdk
                     $"{nameof(RequestQuoteProcessorFunction.FunctionHandler)}",
 
                 Timeout = Duration.Seconds(30)
+            });
+        }
+
+        /// <summary>
+        /// Dotnet 5 Elastic Beanstalk Website
+        /// </summary>
+        private void CreateWebsiteHost()
+        {
+            var deployAsset = new Asset(this, "webDeploy", new AssetProps
+            {
+                // Assume we're running at root solution with `cdk deploy`
+                // also requires cdk command to publish web project
+                Path = Path.Combine(Directory.GetCurrentDirectory(), @$"Web\bin\{_buildConfiguration}\net5.0\publish\")
+            });
+            
+            var applicationVersion = new CfnApplicationVersion(this, "Web-ApplicationVersion", new CfnApplicationVersionProps
+            {
+                ApplicationName = $"{base.StackName}-web",
+                SourceBundle = new CfnApplicationVersion.SourceBundleProperty
+                {
+                    S3Bucket = deployAsset.S3BucketName,
+                    S3Key = deployAsset.S3ObjectKey
+                }
+            });
+            
+            var application = new CfnApplication(this, "Application", new CfnApplicationProps
+            {
+                ApplicationName = applicationVersion.ApplicationName
+            });
+            applicationVersion.AddDependsOn(application);
+            
+            var role = new Role(this, "Role", new RoleProps
+            {
+                AssumedBy = new ServicePrincipal("ec2.amazonaws.com"),
+
+                // https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html
+                ManagedPolicies = new[]
+                {
+                    ManagedPolicy.FromAwsManagedPolicyName("AWSElasticBeanstalkWebTier"),
+                    ManagedPolicy.FromAwsManagedPolicyName("AWSElasticBeanstalkWorkerTier")
+                }
+            });
+
+            var instanceProfile = new CfnInstanceProfile(this, "InstanceProfile", new CfnInstanceProfileProps
+            {
+                Roles = new[] { role.RoleName}
+            });
+
+            var optionSettingProperties = new List<CfnEnvironment.OptionSettingProperty>
+            {
+                new CfnEnvironment.OptionSettingProperty
+                {
+                    Namespace = "aws:autoscaling:launchconfiguration",
+                    OptionName = "IamInstanceProfile",
+                    Value = instanceProfile.AttrArn
+                }
+            };
+            
+            var environment = new CfnEnvironment(this, "Environment", new CfnEnvironmentProps
+            {
+                EnvironmentName = $"{base.StackName}-Web-Environment",
+                ApplicationName = application.ApplicationName,
+                // https://docs.aws.amazon.com/elasticbeanstalk/latest/platforms/platforms-supported.html#platforms-supported.dotnetlinux
+                SolutionStackName = "64bit Amazon Linux 2 v2.2.5 running .NET Core",
+                OptionSettings = optionSettingProperties.ToArray(),
+                VersionLabel = applicationVersion.Ref
+            });
+
+            var output = new CfnOutput(this, "EndpointURL", new CfnOutputProps
+            {
+                Value = $"http://{environment.AttrEndpointUrl}/"
             });
         }
     }
