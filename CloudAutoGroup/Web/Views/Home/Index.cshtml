@@ -1,6 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+@model Settings
 
 <div class="text-center" style="height: 125px">
     <h1 class="display-4">Welcome to Cloud Auto Group</h1>
@@ -41,8 +42,7 @@
 
             $("#lblResults").fadeOut(function() {
 
-                // NEED RequestQuoteApi URL
-                var requestQuoteApiUrl = 'TODO';
+                var requestQuoteApiUrl = '@Model.RequestQuoteApiUrl';
 
                 var data = JSON.stringify({
                     "name": $("#txtName").val(),
