@@ -27,7 +27,7 @@ namespace Cdk
 
             CreateRequestQuoteQueueProcessorHost();
 
-            CreateWebsiteHost();
+            CreateWebsiteHost(requestApi);
         }
 
         /// <summary>
@@ -94,7 +94,8 @@ namespace Cdk
         /// <summary>
         /// Dotnet 5 Elastic Beanstalk Website
         /// </summary>
-        private void CreateWebsiteHost()
+        /// <param name="requestApi"></param>
+        private void CreateWebsiteHost(LambdaRestApi requestApi)
         {
             var deployAsset = new Asset(this, "webDeploy", new AssetProps
             {
@@ -143,6 +144,14 @@ namespace Cdk
                     Namespace = "aws:autoscaling:launchconfiguration",
                     OptionName = "IamInstanceProfile",
                     Value = instanceProfile.AttrArn
+                },
+
+                // set custom environment variables
+                new CfnEnvironment.OptionSettingProperty
+                {
+                    Namespace = "aws:elasticbeanstalk:application:environment",
+                    OptionName = nameof(CloudAutoGroup.TVCampaign.Web.Settings.RequestQuoteApiUrl),
+                    Value = requestApi.Url
                 }
             };
             
