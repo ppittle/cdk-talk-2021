@@ -23,7 +23,7 @@ namespace Cdk
 
         internal TVCampaignStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
         {
-            CreateRequestQuoteApiHost();
+            var requestApi = CreateRequestQuoteApiHost();
 
             CreateRequestQuoteQueueProcessorHost();
 
@@ -33,7 +33,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 5 Container Image Lambda + Api Gateway
         /// </summary>
-        private void CreateRequestQuoteApiHost()
+        private LambdaRestApi CreateRequestQuoteApiHost()
         {
             // relative to cdk.json file
             var directoryContainingDockerFile = nameof(CloudAutoGroup.TVCampaign.RequestQuoteApi);
@@ -63,6 +63,8 @@ namespace Cdk
             {
                 Handler = requestQuoteApiLambda
             });
+
+            return api;
         }
 
         /// <summary>
