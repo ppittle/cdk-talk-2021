@@ -31,3 +31,46 @@
         <strong id="lblResults" style="display: none"></strong>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        $("#btnSubmit").click(function() {
+
+            $("#btnSubmit").prop('disabled', true);
+            $("#btnSubmit").html("   ...   ");
+
+            $("#lblResults").fadeOut(function() {
+
+                // NEED RequestQuoteApi URL
+                var requestQuoteApiUrl = 'TODO';
+
+                var data = JSON.stringify({
+                    "name": $("#txtName").val(),
+                    "email": $("#txtEmail").val(),
+                    "carType": $("#txtCarType").val(),
+                    "creditScoreEstimate": parseInt($("#txtCreditScore").val())
+                });
+
+                $.ajax({
+                    url: requestQuoteApiUrl,
+                    method: "POST",
+                    data: data,
+                    contentType: "application/json; charset=utf-8",
+                    success: function(results) {
+                        // clear out the form data
+                        $('form').get(0).reset();
+                    },
+                    complete: function(xhr, status) {
+                        $("#lblResults").html(status +": " + xhr.responseText);
+                        $("#lblResults").fadeIn();
+
+                        $("#btnSubmit").removeAttr('disabled');
+                        $("#btnSubmit").html("Submit");
+                    }
+                });
+            });
+
+            return false;
+        });
+    });
+</script>
