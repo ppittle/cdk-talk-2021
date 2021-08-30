@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Amazon.SQS;
+using Amazon.SQS.Model;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace CloudAutoGroup.TVCampaign.Shared
 {
@@ -8,11 +12,29 @@ namespace CloudAutoGroup.TVCampaign.Shared
         Task Write(QuoteRequest message);
     }
 
+    public class QuoteRequestQueueClientSettings
+    {
+        public string QueueUrl { get; set; }
+    }
+
     public class QuoteRequestQueueClient : IQuoteRequestQueueClient
     {
-        public Task Write(QuoteRequest message)
+        private readonly IAmazonSQS _sqsClient;
+        private readonly IOptions<QuoteRequestQueueClientSettings> _options;
+
+        public QuoteRequestQueueClient(IAmazonSQS sqsClient, IOptions<QuoteRequestQueueClientSettings> options)
         {
-            throw new NotImplementedException();
+            _sqsClient = sqsClient;
+            _options = options;
+        }
+
+        public async Task Write(QuoteRequest message)
+        {
+            await _sqsClient.SendMessageAsync(new SendMessageRequest
+            {
+                QueueUrl = _options.Value.QueueUrl,
+                MessageBody = JsonConvert.SerializeObject(message)
+            });
         }
     }
 }
