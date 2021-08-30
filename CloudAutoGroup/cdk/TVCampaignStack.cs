@@ -7,6 +7,7 @@ using Amazon.CDK.AWS.ElasticBeanstalk;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.S3.Assets;
+using Amazon.CDK.AWS.SQS;
 using RequestQuoteApiFunction = CloudAutoGroup.TVCampaign.RequestQuoteApi.Functions;
 using RequestQuoteProcessorFunction = CloudAutoGroup.TVCampaign.RequestQuoteProcessor.Function;
 
@@ -23,11 +24,21 @@ namespace Cdk
 
         internal TVCampaignStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
         {
-            var requestApi = CreateRequestQuoteApiHost();
+            var queue = CreateQueue();
+            
+			var requestApi = CreateRequestQuoteApiHost();
 
             CreateRequestQuoteQueueProcessorHost();
 
             CreateWebsiteHost(requestApi);
+        }
+
+        private Queue CreateQueue()
+        {
+            return new Amazon.CDK.AWS.SQS.Queue(this, "queue", new QueueProps
+            {
+                QueueName = "request-queue"
+            });
         }
 
         /// <summary>
