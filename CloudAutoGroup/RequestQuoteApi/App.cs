@@ -47,7 +47,11 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteApi
 
             response.Headers = new Dictionary<string, string>
             {
-                {"Content-Type", "text/plain"}
+                {"Content-Type", "text/plain"},
+                // add CORS headers
+                {"Access-Control-Allow-Headers", "Content-Type"},
+                {"Access-Control-Allow-Origin", "*"},
+                {"Access-Control-Allow-Methods", "OPTIONS,POST,GET"}
             };
 
             return response;
