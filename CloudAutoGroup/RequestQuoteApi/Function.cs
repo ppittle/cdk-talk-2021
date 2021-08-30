@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 using Amazon.Lambda.Core;
 using Amazon.Lambda.APIGatewayEvents;
+using Amazon.SQS;
+using CloudAutoGroup.TVCampaign.Shared;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -20,9 +23,19 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteApi
         /// </summary>
         public Functions()
         {
+            var config =
+                new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .Build();
+
             var services =
                 new ServiceCollection()
+                    .AddTransient<IQuoteRequestQueueClient, QuoteRequestQueueClient>()
+                    .AddAWSService<IAmazonSQS>()
                     .AddTransient<App>();
+
+            services.AddOptions();
+            services.Configure<QuoteRequestQueueClientSettings>(config);
 
             _app = services.BuildServiceProvider().GetService<App>();
         }
