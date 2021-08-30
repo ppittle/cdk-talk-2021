@@ -8,6 +8,7 @@ using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.S3.Assets;
 using Amazon.CDK.AWS.SQS;
+using CloudAutoGroup.TVCampaign.Shared;
 using RequestQuoteApiFunction = CloudAutoGroup.TVCampaign.RequestQuoteApi.Functions;
 using RequestQuoteProcessorFunction = CloudAutoGroup.TVCampaign.RequestQuoteProcessor.Function;
 
@@ -26,7 +27,7 @@ namespace Cdk
         {
             var queue = CreateQueue();
             
-			var requestApi = CreateRequestQuoteApiHost();
+			var requestApi = CreateRequestQuoteApiHost(queue);
 
             CreateRequestQuoteQueueProcessorHost();
 
@@ -44,7 +45,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 5 Container Image Lambda + Api Gateway
         /// </summary>
-        private LambdaRestApi CreateRequestQuoteApiHost()
+        private LambdaRestApi CreateRequestQuoteApiHost(Queue quoteRequestQueue)
         {
             // relative to cdk.json file
             var directoryContainingDockerFile = nameof(CloudAutoGroup.TVCampaign.RequestQuoteApi);
@@ -66,7 +67,11 @@ namespace Cdk
                     }
                 }),
                 Handler = Handler.FROM_IMAGE,
-                Timeout = Duration.Seconds(15)
+                Timeout = Duration.Seconds(15),
+                Environment = new Dictionary<string, string>
+                {
+                    {nameof(QuoteRequestQueueClientSettings.QueueUrl), quoteRequestQueue.QueueUrl}
+                }
             });
 
             // setup api gateway
