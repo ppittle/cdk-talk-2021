@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Amazon.DynamoDBv2;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
 using CloudAutoGroup.TVCampaign.Shared;
@@ -26,9 +26,19 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
         /// </summary>
         public Function()
         {
+            var config =
+                new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .Build();
+
             var services =
                 new ServiceCollection()
+                    .AddTransient<IFullQuoteRepository, FullQuoteRepository>()
+                    .AddAWSService<IAmazonDynamoDB>()
                     .AddTransient<App>();
+
+            services.AddOptions();
+            services.Configure<FullQuoteRepositorySettings>(config);
 
             _app = services.BuildServiceProvider().GetService<App>();
         }
