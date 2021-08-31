@@ -80,7 +80,15 @@ namespace Cdk
             // setup api gateway
             var api = new LambdaRestApi(this, "request-quote-api-lambda-api-gateway", new LambdaRestApiProps
             {
-                Handler = requestQuoteApiLambda
+                Handler = requestQuoteApiLambda,
+
+                DefaultCorsPreflightOptions = new CorsOptions
+                {
+                    AllowHeaders = new []{ "Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key" },
+                    AllowMethods = new []{ "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE" },
+                    AllowCredentials =  true,
+                    AllowOrigins = new []{ "*" }
+                }
             });
 
             return api;
