@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
+using CloudAutoGroup.TVCampaign.Shared;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -14,6 +17,8 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
 {
     public class Function
     {
+        private readonly App _app;
+
         /// <summary>
         /// Default constructor. This constructor is used by Lambda to construct the instance. When invoked in a Lambda environment
         /// the AWS credentials will come from the IAM role associated with the function and the AWS region will be set to the
@@ -21,7 +26,11 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
         /// </summary>
         public Function()
         {
+            var services =
+                new ServiceCollection()
+                    .AddTransient<App>();
 
+            _app = services.BuildServiceProvider().GetService<App>();
         }
 
 
@@ -34,13 +43,16 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
         /// <returns></returns>
         public async Task FunctionHandler(SQSEvent evnt, ILambdaContext context)
         {
-            foreach(var message in evnt.Records)
+            foreach (var message in evnt.Records)
             {
-                await ProcessMessageAsync(message, context);
+                await _app.ProcessMessageAsync(message, context);
             }
         }
+    }
 
-        private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
+    public class App
+    {
+        public async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
         {
             context.Logger.LogLine($"Processed message {message.Body}");
 
