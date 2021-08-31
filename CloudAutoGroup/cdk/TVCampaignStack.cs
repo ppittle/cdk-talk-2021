@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using Amazon.CDK;
 using Amazon.CDK.AWS.APIGateway;
+using Amazon.CDK.AWS.DynamoDB;
 using Amazon.CDK.AWS.ElasticBeanstalk;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
@@ -28,6 +29,8 @@ namespace Cdk
         {
             var queue = CreateQueue();
             
+            var dataStore = CreateDataStore();
+
 			var requestApi = CreateRequestQuoteApiHost(queue);
 
             CreateRequestQuoteQueueProcessorHost(queue);
@@ -41,6 +44,31 @@ namespace Cdk
             {
                 QueueName = "request-queue"
             });
+        }
+
+        /// <summary>
+        /// Create an Amazon DynamoDb table we can use to store quotes.
+        /// </summary>
+        private Table CreateDataStore()
+        {
+            var table = new Amazon.CDK.AWS.DynamoDB.Table(this, "item-storage", new TableProps
+            {
+                TableName = "quotes",
+                BillingMode = BillingMode.PAY_PER_REQUEST,
+                RemovalPolicy = RemovalPolicy.DESTROY,
+                PartitionKey = new Attribute
+                {
+                    Name = nameof(FullQuote.Request.Name),
+                    Type = AttributeType.STRING
+                },
+                SortKey = new Attribute
+                {
+                    Name = nameof(FullQuote.Request.Email),
+                    Type = AttributeType.STRING
+                }
+            });
+
+            return table;
         }
 
         /// <summary>
