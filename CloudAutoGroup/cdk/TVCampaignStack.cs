@@ -74,6 +74,9 @@ namespace Cdk
                 }
             });
 
+            // grant write access to queue
+            quoteRequestQueue.GrantSendMessages(requestQuoteApiLambda);
+
             // setup api gateway
             var api = new LambdaRestApi(this, "request-quote-api-lambda-api-gateway", new LambdaRestApiProps
             {
