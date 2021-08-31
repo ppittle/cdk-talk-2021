@@ -39,11 +39,25 @@ namespace CloudAutoGroup.TVCampaign.Shared
             });
         }
 
-        public Task<List<FullQuote>> GetAll()
+        public async Task<List<FullQuote>> GetAll()
         {
-            throw new NotImplementedException();
-        }
+            var scanRequest = new ScanRequest
+            {
+                TableName = _settings.Value.TableName
+            };
 
+            return
+                await _dynamoDb
+                    .Paginators
+                    .Scan(scanRequest)
+                    .Responses
+                    .SelectMany(x =>
+                        x.Items
+                            .Select(y => Deserialize(y))
+                            .ToAsyncEnumerable())
+                    .ToListAsync();
+        }
+        
         private Dictionary<string, AttributeValue> Serialize(FullQuote model)
         {
             return new Dictionary<string, AttributeValue>
@@ -56,5 +70,29 @@ namespace CloudAutoGroup.TVCampaign.Shared
             };
         }
 
+        private FullQuote Deserialize(Dictionary<string, AttributeValue> item)
+        {
+            var model = new FullQuote
+            {
+                Request = new QuoteRequest()
+            };
+
+            if (item.TryGetValue(nameof(FullQuote.Request.Name), out var name))
+                model.Request.Name = name.S;
+
+            if (item.TryGetValue("Email", out var email))
+                model.Request.Email = email.S;
+
+            if (item.TryGetValue("CarType", out var carType))
+                model.Request.CarType = carType.S;
+
+            if (item.TryGetValue("CreditScoreEstimate", out var creditScoreEstimate))
+                model.Request.CreditScoreEstimate = int.Parse(creditScoreEstimate.N);
+
+            if (item.TryGetValue("MonthlyPremium", out var monthlyPremium))
+                model.MonthlyPremium = int.Parse(monthlyPremium.N);
+
+            return model;
+        }
     }
 }
