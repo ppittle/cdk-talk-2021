@@ -33,7 +33,7 @@ namespace Cdk
 
 			var requestApi = CreateRequestQuoteApiHost(queue);
 
-            CreateRequestQuoteQueueProcessorHost(queue);
+            CreateRequestQuoteQueueProcessorHost(queue, dataStore);
 
             CreateWebsiteHost(requestApi);
         }
@@ -126,7 +126,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 3.1 Lambda
         /// </summary>
-        private void CreateRequestQuoteQueueProcessorHost(Queue quoteRequestQueue)
+        private void CreateRequestQuoteQueueProcessorHost(Queue quoteRequestQueue, Table dataStore)
         {
             var processingLambda = new Function(this, "request-quote-processor-lambda", new FunctionProps
             {
@@ -143,11 +143,19 @@ namespace Cdk
                     // Method
                     $"{nameof(RequestQuoteProcessorFunction.FunctionHandler)}",
 
-                Timeout = Duration.Seconds(30)
+                Timeout = Duration.Seconds(30),
+
+                Environment = new Dictionary<string, string>
+                {
+                    {nameof(FullQuoteRepositorySettings.TableName), dataStore.TableName}
+                }
             });
 
             // Configure lambda to process ingestion queue messages
             processingLambda.AddEventSource(new SqsEventSource(quoteRequestQueue));
+
+            // Setup permissions
+            dataStore.GrantWriteData(processingLambda);
         }
 
         /// <summary>
