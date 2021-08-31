@@ -6,6 +6,7 @@ using Amazon.CDK.AWS.APIGateway;
 using Amazon.CDK.AWS.ElasticBeanstalk;
 using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
+using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.S3.Assets;
 using Amazon.CDK.AWS.SQS;
 using CloudAutoGroup.TVCampaign.Shared;
@@ -29,7 +30,7 @@ namespace Cdk
             
 			var requestApi = CreateRequestQuoteApiHost(queue);
 
-            CreateRequestQuoteQueueProcessorHost();
+            CreateRequestQuoteQueueProcessorHost(queue);
 
             CreateWebsiteHost(requestApi);
         }
@@ -97,7 +98,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 3.1 Lambda
         /// </summary>
-        private void CreateRequestQuoteQueueProcessorHost()
+        private void CreateRequestQuoteQueueProcessorHost(Queue quoteRequestQueue)
         {
             var processingLambda = new Function(this, "request-quote-processor-lambda", new FunctionProps
             {
@@ -116,6 +117,9 @@ namespace Cdk
 
                 Timeout = Duration.Seconds(30)
             });
+
+            // Configure lambda to process ingestion queue messages
+            processingLambda.AddEventSource(new SqsEventSource(quoteRequestQueue));
         }
 
         /// <summary>
