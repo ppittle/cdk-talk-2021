@@ -1,5 +1,16 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    ViewData["Title"] = "All Quotes";
 }
+
+<div class="text-center" style="height: 125px">
+    <h1 class="display-4">Cloud Auto Group Employees Only</h1>
+</div>
+
+<div class="jumbotron">
+    <h2 class="display-3">All Quotes: </h2>
+    
+    <button id="btnReload" class="btn btn-primary">Reload</button>
+    <div id="lblLoading" class="p-3"><h3>... LOADING ...</h3></div>
+
+    <div id="tblResults" style="display: none"></div>
+</div>
