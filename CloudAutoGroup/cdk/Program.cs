@@ -1,6 +1,7 @@
 ﻿using Amazon.CDK;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 
@@ -11,6 +12,7 @@ namespace Cdk
         public string AwsAccountId { get; set; }
         public string AwsRegion { get; set; }
         public double RequestQuoteProcessorMemorySize { get; set; }
+        public bool Debug { get; set; }
     }
 
     sealed class Program
@@ -24,7 +26,8 @@ namespace Cdk
                     {
                         {"AwsAccountId", "TODO - Enter your AWS Account Id here"},
                         {"AwsRegion", "eu-west-1"},
-                        {"RequestQuoteProcessorMemorySize", "128"}
+                        {"RequestQuoteProcessorMemorySize", "128"},
+                        {"Debug", "true"}
                     })
                     // relative to the root of the Cdk.csproj
                     .AddJsonFile("settings.json", optional: true)
@@ -32,6 +35,9 @@ namespace Cdk
                     // any other Configuration Builder
                     .Build()
                     .Get<DeploymentSettings>();
+
+            if (deploymentSettings.Debug)
+                Debugger.Launch();
 
             var app = new App();
             new TVCampaignStack(deploymentSettings, app, "TVCampaignStack", new StackProps
