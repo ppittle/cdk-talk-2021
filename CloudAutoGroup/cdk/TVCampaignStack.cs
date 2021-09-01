@@ -24,9 +24,12 @@ namespace Cdk
 #else
             "Release";
 #endif
+        private readonly DeploymentSettings _settings;
 
-        internal TVCampaignStack(Construct scope, string id, IStackProps props = null) : base(scope, id, props)
+        internal TVCampaignStack(DeploymentSettings settings, Construct scope, string id, IStackProps props = null) : base(scope, id, props)
         {
+            _settings = settings;
+
             var queue = CreateQueue();
             
             var dataStore = CreateDataStore();
@@ -144,7 +147,7 @@ namespace Cdk
                     $"{nameof(RequestQuoteProcessorFunction.FunctionHandler)}",
 
                 Timeout = Duration.Seconds(30),
-
+                MemorySize = _settings.RequestQuoteProcessorMemorySize,
                 Environment = new Dictionary<string, string>
                 {
                     {nameof(FullQuoteRepositorySettings.TableName), dataStore.TableName}

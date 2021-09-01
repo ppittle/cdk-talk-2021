@@ -10,6 +10,7 @@ namespace Cdk
     {
         public string AwsAccountId { get; set; }
         public string AwsRegion { get; set; }
+        public double RequestQuoteProcessorMemorySize { get; set; }
     }
 
     sealed class Program
@@ -22,7 +23,8 @@ namespace Cdk
                     .AddInMemoryCollection(new Dictionary<string, string>
                     {
                         {"AwsAccountId", "TODO - Enter your AWS Account Id here"},
-                        {"AwsRegion", "eu-west-1"}
+                        {"AwsRegion", "eu-west-1"},
+                        {"RequestQuoteProcessorMemorySize", "128"}
                     })
                     // relative to the root of the Cdk.csproj
                     .AddJsonFile("settings.json", optional: true)
@@ -32,7 +34,7 @@ namespace Cdk
                     .Get<DeploymentSettings>();
 
             var app = new App();
-            new TVCampaignStack(app, "TVCampaignStack", new StackProps
+            new TVCampaignStack(deploymentSettings, app, "TVCampaignStack", new StackProps
             {
                 // If you don't specify 'env', this stack will be environment-agnostic.
                 // Account/Region-dependent features and context lookups will not work,
