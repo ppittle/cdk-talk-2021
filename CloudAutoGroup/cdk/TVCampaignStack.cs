@@ -35,7 +35,7 @@ namespace Cdk
 
             CreateRequestQuoteQueueProcessorHost(queue, dataStore);
 
-            CreateWebsiteHost(requestApi);
+            CreateWebsiteHost(requestApi, dataStore);
         }
 
         private Queue CreateQueue()
@@ -162,7 +162,7 @@ namespace Cdk
         /// Dotnet 5 Elastic Beanstalk Website
         /// </summary>
         /// <param name="requestApi"></param>
-        private void CreateWebsiteHost(LambdaRestApi requestApi)
+        private void CreateWebsiteHost(LambdaRestApi requestApi, Table dataStore)
         {
             var deployAsset = new Asset(this, "webDeploy", new AssetProps
             {
@@ -219,9 +219,17 @@ namespace Cdk
                     Namespace = "aws:elasticbeanstalk:application:environment",
                     OptionName = nameof(CloudAutoGroup.TVCampaign.Web.Settings.RequestQuoteApiUrl),
                     Value = requestApi.Url
+                },
+                new CfnEnvironment.OptionSettingProperty
+                {
+                    Namespace = "aws:elasticbeanstalk:application:environment",
+                    OptionName = nameof(FullQuoteRepositorySettings.TableName),
+                    Value = dataStore.TableName
                 }
             };
-            
+
+            dataStore.GrantReadData(role);
+
             var environment = new CfnEnvironment(this, "Environment", new CfnEnvironmentProps
             {
                 EnvironmentName = $"{base.StackName}-Web-Environment",
