@@ -2,13 +2,35 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace Cdk
 {
+    public class DeploymentSettings
+    {
+        public string AwsAccountId { get; set; }
+        public string AwsRegion { get; set; }
+    }
+
     sealed class Program
     {
         public static void Main(string[] args)
         {
+            // var settings
+            var deploymentSettings =
+                new ConfigurationBuilder()
+                    .AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        {"AwsAccountId", "TODO - Enter your AWS Account Id here"},
+                        {"AwsRegion", "eu-west-1"}
+                    })
+                    // relative to the root of the Cdk.csproj
+                    .AddJsonFile("settings.json", optional: true)
+                    // could also add environment variables, or
+                    // any other Configuration Builder
+                    .Build()
+                    .Get<DeploymentSettings>();
+
             var app = new App();
             new TVCampaignStack(app, "TVCampaignStack", new StackProps
             {
@@ -31,8 +53,8 @@ namespace Cdk
                 /**/
                 Env = new Amazon.CDK.Environment
                 {
-                    Account = "TODO - Enter your AWS Account Id here",
-                    Region = "eu-west-1",
+                    Account = deploymentSettings.AwsAccountId,
+                    Region = deploymentSettings.AwsRegion
                 }
 
                 // For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
