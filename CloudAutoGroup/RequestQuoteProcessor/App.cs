@@ -10,10 +10,12 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
     public class App
     {
         private readonly IFullQuoteRepository _quoteRepository;
+        private readonly INewQuoteNotifier _newQuoteNotifier;
 
-        public App(IFullQuoteRepository quoteRepository)
+        public App(IFullQuoteRepository quoteRepository, INewQuoteNotifier newQuoteNotifier)
         {
             _quoteRepository = quoteRepository;
+            _newQuoteNotifier = newQuoteNotifier;
         }
 
         public async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
@@ -27,6 +29,8 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
                 var model = ProcessItemData(request);
 
                 await _quoteRepository.Insert(model);
+
+                await _newQuoteNotifier.SendNewQuoteNotification();
 
                 // next step - email quote to customer
 

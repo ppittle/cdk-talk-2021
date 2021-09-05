@@ -9,6 +9,8 @@ using Amazon.CDK.AWS.IAM;
 using Amazon.CDK.AWS.Lambda;
 using Amazon.CDK.AWS.Lambda.EventSources;
 using Amazon.CDK.AWS.S3.Assets;
+using Amazon.CDK.AWS.SNS;
+using Amazon.CDK.AWS.SNS.Subscriptions;
 using Amazon.CDK.AWS.SQS;
 using CloudAutoGroup.TVCampaign.Shared;
 using RequestQuoteApiFunction = CloudAutoGroup.TVCampaign.RequestQuoteApi.Functions;
@@ -34,11 +36,26 @@ namespace Cdk
             
             var dataStore = CreateDataStore();
 
+            var newQuoteNotifier = CreateNewQuoteDingEmailNotifier();
+
 			var requestApi = CreateRequestQuoteApiHost(queue);
 
-            CreateRequestQuoteQueueProcessorHost(queue, dataStore);
+            CreateRequestQuoteQueueProcessorHost(queue, dataStore, newQuoteNotifier);
 
             CreateWebsiteHost(requestApi, dataStore);
+        }
+
+        private Topic CreateNewQuoteDingEmailNotifier()
+        {
+            var snsTopic = new Amazon.CDK.AWS.SNS.Topic(this, "sales-ding-notifier", new TopicProps
+            {
+                DisplayName = "Sales Ding Notifier",
+                TopicName = "sales-ding-notifier"
+            });
+
+            snsTopic.AddSubscription(new EmailSubscription(_settings.MarketingDingEmail));
+
+            return snsTopic;
         }
 
         private Queue CreateQueue()
@@ -129,7 +146,7 @@ namespace Cdk
         /// <summary>
         /// Dotnet 3.1 Lambda
         /// </summary>
-        private void CreateRequestQuoteQueueProcessorHost(Queue quoteRequestQueue, Table dataStore)
+        private void CreateRequestQuoteQueueProcessorHost(Queue quoteRequestQueue, Table dataStore, Topic newQuoteNotifier)
         {
             var processingLambda = new Function(this, "request-quote-processor-lambda", new FunctionProps
             {
@@ -150,7 +167,8 @@ namespace Cdk
                 MemorySize = _settings.RequestQuoteProcessorMemorySize,
                 Environment = new Dictionary<string, string>
                 {
-                    {nameof(FullQuoteRepositorySettings.TableName), dataStore.TableName}
+                    {nameof(FullQuoteRepositorySettings.TableName), dataStore.TableName},
+                    {nameof(NewQuoteNotifierSettings.NotificationTopicArn), newQuoteNotifier.TopicArn}
                 }
             });
 
@@ -159,6 +177,7 @@ namespace Cdk
 
             // Setup permissions
             dataStore.GrantWriteData(processingLambda);
+            newQuoteNotifier.GrantPublish(processingLambda);
         }
 
         /// <summary>

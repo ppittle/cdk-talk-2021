@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.SQSEvents;
+using Amazon.SimpleNotificationService;
 using CloudAutoGroup.TVCampaign.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,11 +35,14 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteProcessor
             var services =
                 new ServiceCollection()
                     .AddTransient<IFullQuoteRepository, FullQuoteRepository>()
+                    .AddTransient<INewQuoteNotifier, NewQuoteNotifier>()
                     .AddAWSService<IAmazonDynamoDB>()
+                    .AddAWSService<IAmazonSimpleNotificationService>()
                     .AddTransient<App>();
 
             services.AddOptions();
             services.Configure<FullQuoteRepositorySettings>(config);
+            services.Configure<NewQuoteNotifierSettings>(config);
 
             _app = services.BuildServiceProvider().GetService<App>();
         }

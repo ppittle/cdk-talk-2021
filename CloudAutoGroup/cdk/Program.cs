@@ -12,6 +12,7 @@ namespace Cdk
         public string AwsAccountId { get; set; }
         public string AwsRegion { get; set; }
         public double RequestQuoteProcessorMemorySize { get; set; }
+        public string MarketingDingEmail { get; set; }
         public bool Debug { get; set; }
     }
 
@@ -27,6 +28,7 @@ namespace Cdk
                         {"AwsAccountId", "TODO - Enter your AWS Account Id here"},
                         {"AwsRegion", "eu-west-1"},
                         {"RequestQuoteProcessorMemorySize", "128"},
+                        {"MarketingDingEmail", "developer+QA-Env@CloudAutoGroup.com"},
                         {"Debug", "true"}
                     })
                     // relative to the root of the Cdk.csproj
