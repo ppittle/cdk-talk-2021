@@ -55,6 +55,22 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteApi
 
         private async Task QueueIngestionRequest(QuoteRequest request)
         {
+            // basic validation
+            if (string.IsNullOrEmpty(request.Name))
+                throw new ArgumentException("Missing Name");
+
+            if (string.IsNullOrEmpty(request.Email))
+                throw new ArgumentException("Missing Email");
+
+            if (string.IsNullOrEmpty(request.CarType))
+                throw new ArgumentException("Missing Car Type");
+
+            if (request.CreditScoreEstimate < 400)
+                throw new ArgumentException("Credit score is too low");
+
+            if (request.CreditScoreEstimate > 850)
+                throw new ArgumentException("Invalid credit score, must be lower than 850.");
+
             await _queue.Write(request);
         }
     }
