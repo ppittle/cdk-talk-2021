@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 using Amazon.Lambda.Core;
@@ -38,23 +36,6 @@ namespace CloudAutoGroup.TVCampaign.RequestQuoteApi
         public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
         {
             return await _app.Get(request, context);
-        }
-    }
-
-    public class App
-    {
-        public async Task<APIGatewayProxyResponse> Get(APIGatewayProxyRequest request, ILambdaContext context)
-        {
-            context.Logger.LogLine("Get Request\n");
-
-            var response = new APIGatewayProxyResponse
-            {
-                StatusCode = (int)HttpStatusCode.OK,
-                Body = "Hello AWS Serverless",
-                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
-            };
-
-            return response;
         }
     }
 }
