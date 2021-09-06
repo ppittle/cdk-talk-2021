@@ -14,3 +14,65 @@
 
     <div id="tblResults" style="display: none"></div>
 </div>
+
+<script>
+    function loadTable() {
+        $.ajax({
+            url: '/api/quotes/',
+            success: function(results) {
+                $("#tblResults").html(renderTable(results));
+            },
+            error: function(xhr, status, error) {
+                console.log(xhr);
+                $("#tblResults").html("Query failed: <br/>" + xhr.status + "<br/> " + xhr.responseText);
+            },
+            complete: function() {
+                $("#lblLoading").fadeOut(function () { $("#tblResults").fadeIn(); });
+            }
+        });
+    }
+
+    function renderTable(items) {
+        var html = `
+            <table class="table">
+                <thead><tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Car Type</th>
+                <th scope="col">Credit Score Estimate</th>
+                <th scope="col">Monthly Premium</th>
+                </tr></thead>
+            `;
+
+        items.forEach(function (item, idx) {
+            html += "<tr>";
+            html += `<td>${idx}</td>`;
+            html += `<td>${item.request.name}</td>`;
+            html += `<td>${item.request.email}</td>`;
+            html += `<td>${item.request.carType}</td>`;
+            html += `<td>${item.request.creditScoreEstimate}</td>`;
+            html += `<td>$ ${item.monthlyPremium}</td>`;
+            html += "</tr>";
+        });
+
+        html += "</table>";
+
+        return html;
+    }
+
+    document.addEventListener("DOMContentLoaded",
+        function(event) {
+
+            loadTable();
+
+            // btnReload Click Handler
+            $("#btnReload").click(function() {
+                $("#tblResults").fadeOut(function() {
+                    $("#lblLoading").fadeIn(function() {
+                        loadTable();
+                    });
+                });
+            });
+        });
+</script>
